@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AQUA-AI | Industrial ETP/STP/WTP/ZLD Design Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#070C14;--bg1:#0C1420;--bg2:#111C2E;--bg3:#162236;
+  --border:#1E3050;--bGlow:#1E6AFF;
+  --acc:#00D4FF;--accD:#0099CC;
+  --grn:#00FF9C;--amb:#FFB800;--red:#FF4060;--pur:#B060FF;
+  --tx:#C8D8F0;--txD:#6080A0;--txB:#E8F4FF;
+  --gl:rgba(30,96,255,0.07);
+}
+html,body{height:100%;overflow:hidden;font-family:'Exo 2',sans-serif;font-size:13px;background:var(--bg0);color:var(--tx)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg1)}
+::-webkit-scrollbar-thumb{background:var(--bGlow);border-radius:2px}
+input,select,textarea,button{font-family:inherit;font-size:inherit}
+button{cursor:pointer}
+
+/* BG */
+#bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--gl) 1px,transparent 1px),linear-gradient(90deg,var(--gl) 1px,transparent 1px);
+  background-size:40px 40px}
+#bg-glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(0,120,255,.08),transparent)}
+
+/* LAYOUT */
+#platform{display:flex;height:100vh;width:100vw;position:relative;z-index:1;overflow:hidden}
+
+/* SIDEBAR */
+#sidebar{
+  width:64px;background:var(--bg1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;padding:12px 0;
+  flex-shrink:0;transition:width .3s cubic-bezier(.4,0,.2,1);overflow:hidden;
+  position:relative;z-index:20;
+}
+#sidebar:hover{width:224px}
+#sidebar:hover .s-lbl{opacity:1;max-width:200px}
+#sidebar:hover .s-sec{opacity:1}
+#sidebar:hover .s-div{opacity:1}
+#sidebar:hover #s-footer{opacity:1}
+#sidebar:hover #s-platname{opacity:1}
+
+#s-logo{
+  width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accD),var(--bGlow));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;color:#fff;
+  box-shadow:0 0 20px rgba(0,180,255,.3);margin-left:12px;
+}
+#s-logorow{display:flex;align-items:center;gap:10px;width:100%;padding:0 12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+#s-platname{opacity:0;transition:opacity .2s;white-space:nowrap;font-family:'Share Tech Mono';font-size:10px;color:var(--txD);letter-spacing:.08em}
+
+.s-sec{opacity:0;transition:opacity .15s;font-size:9px;letter-spacing:.15em;color:var(--txD);
+  padding:14px 14px 4px;text-transform:uppercase;font-family:'Share Tech Mono';white-space:nowrap;width:100%}
+.s-div{opacity:0;transition:opacity .15s;height:1px;background:var(--border);margin:6px 12px;width:calc(100% - 24px)}
+
+.nav-item{
+  display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;
+  border-radius:8px;cursor:pointer;color:var(--txD);font-size:13px;font-weight:500;
+  letter-spacing:.02em;white-space:nowrap;border:1px solid transparent;
+  transition:all .15s;position:relative;
+}
+.nav-item:hover{background:rgba(0,180,255,.08);color:var(--acc);border-color:rgba(0,180,255,.15)}
+.nav-item.active{background:rgba(0,180,255,.12);color:var(--acc);border-color:rgba(0,180,255,.25)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--acc);border-radius:0 3px 3px 0;box-shadow:0 0 8px var(--acc)}
+.nav-icon{font-size:18px;flex-shrink:0;width:22px;text-align:center}
+.s-lbl{opacity:0;max-width:0;transition:opacity .15s .05s,max-width .2s;overflow:hidden}
+
+#s-footer{opacity:0;transition:opacity .2s;margin-top:auto;width:100%;
+  padding:10px 12px;font-size:9.5px;color:var(--txD);font-family:'Share Tech Mono';
+  border-top:1px solid var(--border);white-space:nowrap}
+.s-online{color:var(--grn);display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.s-dot{width:6px;height:6px;border-radius:50%;background:var(--grn);box-shadow:0 0 6px var(--grn);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* TOPBAR */
+#topbar{
+  height:52px;background:var(--bg1);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;
+  position:relative;
+}
+#topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--acc),rgba(0,212,255,.3),transparent)}
+#pg-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;
+  color:var(--txB);letter-spacing:.08em;text-transform:uppercase}
+.tb-badge{padding:2px 10px;border-radius:20px;font-size:10px;
+  font-family:'Share Tech Mono';letter-spacing:.05em;border:1px solid}
+.badge-ai{color:var(--acc);border-color:var(--acc);background:rgba(0,212,255,.08)}
+.badge-live{color:var(--grn);border-color:var(--grn);background:rgba(0,255,156,.08);animation:pulse 2s infinite}
+#tb-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+#tb-proj{font-size:12px;color:var(--txD);font-family:'Share Tech Mono'}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--grn);box-shadow:0 0 6px var(--grn);animation:pulse 1.5s infinite}
+
+/* CONTENT */
+#content{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+
+/* PAGES */
+.page{display:none;flex-direction:column;gap:16px}
+.page.active{display:flex;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* CARD */
+.card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+  padding:20px;position:relative;overflow:hidden;
+}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,180,255,.4),transparent)}
+
+.card-title{
+  font-family:'Rajdhani',sans-serif;font-weight:600;font-size:14px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--txB);
+  display:flex;align-items:center;gap:8px;margin-bottom:16px;
+}
+.ct-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);box-shadow:0 0 6px var(--acc);flex-shrink:0}
+
+/* INPUTS */
+.input-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--txD);font-family:'Share Tech Mono'}
+.field input,.field select,.field textarea{
+  background:var(--bg3);border:1px solid var(--border);border-radius:6px;
+  padding:8px 10px;color:var(--txB);font-family:'Share Tech Mono';font-size:13px;
+  outline:none;transition:all .15s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--acc);box-shadow:0 0 0 2px rgba(0,212,255,.1)}
+.field select option{background:var(--bg3)}
+.field.full{grid-column:1/-1}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 18px;
+  border-radius:7px;font-family:'Rajdhani',sans-serif;font-weight:600;
+  font-size:13px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  border:1px solid;transition:all .15s;white-space:nowrap;
+}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.btn-p{background:rgba(0,212,255,.12);color:var(--acc);border-color:var(--acc)}
+.btn-p:hover{background:rgba(0,212,255,.22);box-shadow:0 0 16px rgba(0,212,255,.2)}
+.btn-g{background:rgba(0,255,156,.10);color:var(--grn);border-color:var(--grn)}
+.btn-g:hover{background:rgba(0,255,156,.2);box-shadow:0 0 16px rgba(0,255,156,.2)}
+.btn-am{background:rgba(255,184,0,.10);color:var(--amb);border-color:var(--amb)}
+.btn-am:hover{background:rgba(255,184,0,.2)}
+.btn-ghost{background:transparent;color:var(--txD);border-color:var(--border)}
+.btn-ghost:hover{color:var(--txB);border-color:rgba(255,255,255,.2)}
+.btn-sm{padding:5px 12px;font-size:11px}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+
+/* MODE BUTTONS */
+.mode-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+
+/* AI OUTPUT */
+.ai-out{
+  background:linear-gradient(135deg,rgba(0,100,200,.05),rgba(0,60,120,.05));
+  border:1px solid rgba(0,180,255,.2);border-radius:10px;padding:16px;
+  font-size:13px;line-height:1.72;color:var(--tx);
+  max-height:480px;overflow-y:auto;margin-top:14px;
+}
+.ai-out h3{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:15px;color:var(--acc);letter-spacing:.06em;margin:12px 0 6px;border-bottom:1px solid rgba(0,212,255,.15);padding-bottom:4px}
+.ai-out h4{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--grn);letter-spacing:.04em;margin:10px 0 4px}
+.ai-out p{margin-bottom:8px}
+.ai-out ul,.ai-out ol{padding-left:18px;margin-bottom:8px}
+.ai-out li{margin-bottom:3px}
+.ai-out strong{color:var(--txB)}
+.ai-out table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px}
+.ai-out th{background:rgba(0,100,200,.15);padding:6px 10px;text-align:left;font-family:'Share Tech Mono';font-size:10px;letter-spacing:.08em;color:var(--acc);border-bottom:1px solid var(--border)}
+.ai-out td{padding:5px 10px;border-bottom:1px solid rgba(30,48,80,.5);vertical-align:top}
+.ai-out tr:hover td{background:rgba(0,100,200,.04)}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--acc);animation:blink .8s step-end infinite;margin-left:2px;vertical-align:text-bottom}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* LOADING */
+.loading-row{display:flex;align-items:center;gap:10px;color:var(--acc);font-family:'Share Tech Mono';font-size:12px;padding:6px 0}
+.spinner{width:20px;height:20px;border:2px solid rgba(0,180,255,.2);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.metric{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;position:relative;overflow:hidden}
+.metric::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;border-radius:0 2px 2px 0}
+.m-acc::before{background:var(--acc)} .m-grn::before{background:var(--grn)} .m-amb::before{background:var(--amb)} .m-red::before{background:var(--red)}
+.metric-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--txD);margin-bottom:6px;font-family:'Share Tech Mono'}
+.metric-value{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:22px}
+.metric-unit{font-size:11px;color:var(--txD);margin-left:3px}
+
+/* PROCESS FLOW */
+.pfd{display:flex;align-items:center;gap:0;overflow-x:auto;padding:14px 0;scrollbar-width:thin}
+.pfd-node{
+  flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:10px 14px;min-width:108px;text-align:center;cursor:pointer;
+  transition:all .2s;
+}
+.pfd-node:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,180,255,.15)}
+.pfd-node.bio{border-color:rgba(0,255,156,.35)}
+.pfd-node.chem{border-color:rgba(255,184,0,.35)}
+.pfd-node.mem{border-color:rgba(176,96,255,.35)}
+.pfd-node.sludge{border-color:rgba(255,64,96,.35)}
+.pfd-node.inlet,.pfd-node.outlet{border-color:rgba(0,212,255,.35)}
+.pfd-type{font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;font-family:'Share Tech Mono'}
+.pfd-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--txB);line-height:1.2}
+.pfd-val{font-size:9.5px;color:var(--txD);margin-top:3px;font-family:'Share Tech Mono'}
+.pfd-arrow{flex-shrink:0;width:32px;text-align:center;color:var(--txD);font-size:18px}
+
+/* BARS */
+.bar-wrap{display:flex;flex-direction:column;gap:10px}
+.bar-item{}
+.bar-head{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px}
+.bar-lbl{font-family:'Share Tech Mono'}
+.bar-pct{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px}
+.bar-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+
+/* SCORE RINGS */
+.score-rings{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.score-ring{position:relative;width:80px;height:80px;flex-shrink:0}
+.score-ring svg{transform:rotate(-90deg)}
+.score-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:20px}
+.score-lbl{font-size:9px;color:var(--txD);font-family:'Share Tech Mono'}
+
+/* TAGS */
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-family:'Share Tech Mono';border:1px solid}
+.tag-blue{color:var(--acc);border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.06)}
+.tag-green{color:var(--grn);border-color:rgba(0,255,156,.3);background:rgba(0,255,156,.06)}
+.tag-amber{color:var(--amb);border-color:rgba(255,184,0,.3);background:rgba(255,184,0,.06)}
+.tag-purple{color:var(--pur);border-color:rgba(176,96,255,.3);background:rgba(176,96,255,.06)}
+.tag-red{color:var(--red);border-color:rgba(255,64,96,.3);background:rgba(255,64,96,.06)}
+
+/* TABS */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.tab{padding:8px 16px;font-family:'Rajdhani',sans-serif;font-weight:600;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  color:var(--txD);border-bottom:2px solid transparent;white-space:nowrap;
+  transition:all .15s;background:none;border-left:none;border-right:none;border-top:none}
+.tab:hover{color:var(--txB);background:rgba(0,180,255,.04)}
+.tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+
+/* LAYOUT ROW */
+.row{display:flex;gap:16px}
+.row .card{flex:1;min-width:0}
+.col-wide{flex:2!important}
+
+/* OPTION CARDS */
+.opt-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.opt-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:10px 14px;min-width:130px;cursor:pointer;transition:all .2s}
+.opt-card:hover{transform:translateY(-2px)}
+.opt-icon{font-size:20px;margin-bottom:4px}
+.opt-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;margin-bottom:4px}
+.opt-tags{display:flex;gap:4px;flex-wrap:wrap}
+
+/* CHECKS */
+.check-list{display:flex;flex-direction:column;gap:6px}
+.check-row{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 10px;background:var(--bg3);border-radius:6px;border:1px solid;font-size:12px}
+.ck-pass{color:var(--grn);font-family:'Share Tech Mono';font-size:12px;font-weight:700}
+.ck-warn{color:var(--amb);font-family:'Share Tech Mono';font-size:12px;font-weight:700}
+.ck-fail{color:var(--red);font-family:'Share Tech Mono';font-size:12px;font-weight:700}
+
+/* DRAWING LIST */
+.dwg-list{display:flex;flex-direction:column;gap:7px}
+.dwg-row{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;font-size:12px}
+
+/* CHAT */
+.chat-history{max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.chat-msg{padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.55}
+.chat-user{background:rgba(0,100,200,.12);border:1px solid rgba(0,100,200,.2);align-self:flex-end;max-width:82%;border-radius:10px 10px 2px 10px}
+.chat-ai{background:var(--bg3);border:1px solid var(--border);align-self:flex-start;max-width:92%;border-radius:2px 10px 10px 10px}
+.chat-ai-lbl{font-size:9.5px;color:var(--acc);margin-bottom:5px;font-family:'Share Tech Mono';letter-spacing:.08em}
+.chat-in-row{display:flex;gap:8px}
+.chat-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:7px;
+  padding:9px 12px;color:var(--txB);font-size:13px;outline:none;transition:border-color .15s}
+.chat-input:focus{border-color:var(--acc)}
+.quick-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+
+/* REPORT TYPES */
+.rtype-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+
+@media(max-width:768px){
+  .row{flex-direction:column}
+  .input-grid{grid-template-columns:repeat(2,1fr)}
+  #content{padding:12px}
+}
+</style>
+</head>
+<body>
+<div id="bg-grid"></div>
+<div id="bg-glow"></div>
+
+<div id="platform">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div id="s-logorow">
+      <div id="s-logo">A</div>
+      <div id="s-platname">AQUA-AI PLATFORM</div>
+    </div>
+    <div style="width:100%;overflow:hidden;flex:1">
+      <div class="s-sec">Engineering</div>
+      <div class="nav-item active" data-page="design"><span class="nav-icon">⚗</span><span class="s-lbl">AI Design Engine</span></div>
+      <div class="nav-item" data-page="simulate"><span class="nav-icon">📊</span><span class="s-lbl">Simulation</span></div>
+      <div class="nav-item" data-page="compare"><span class="nav-icon">⚖</span><span class="s-lbl">Option Comparison</span></div>
+      <div class="nav-item" data-page="financial"><span class="nav-icon">💹</span><span class="s-lbl">Financial Analysis</span></div>
+      <div class="s-div"></div>
+      <div class="s-sec">Outputs</div>
+      <div class="nav-item" data-page="assistant"><span class="nav-icon">🤖</span><span class="s-lbl">AI Assistant</span></div>
+      <div class="nav-item" data-page="validation"><span class="nav-icon">✅</span><span class="s-lbl">Validation</span></div>
+      <div class="nav-item" data-page="drawings"><span class="nav-icon">📐</span><span class="s-lbl">Process Flow</span></div>
+      <div class="nav-item" data-page="reports"><span class="nav-icon">📄</span><span class="s-lbl">Reports</span></div>
+    </div>
+    <div id="s-footer">
+      <div class="s-online"><span class="s-dot"></span>ONLINE</div>
+      <div>AQUA-AI v2.0.1</div>
+      <div>ETP • STP • ZLD • WTP</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <div id="pg-title">AI Design Engine</div>
+      <span class="tb-badge badge-ai">AI-POWERED</span>
+      <span class="tb-badge badge-live">● LIVE</span>
+      <div id="tb-right">
+        <span id="tb-proj">Textile · 1000 m³/d</span>
+        <div class="status-dot"></div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content">
+
+      <!-- ══ PAGE: DESIGN ══ -->
+      <div class="page active" id="page-design">
+        <div class="card">
+          <div class="card-title"><span class="ct-dot"></span>Wastewater Input Parameters
+            <span style="margin-left:auto"><span class="tag tag-blue" id="mode-tag">MODE: AUTO</span></span>
+          </div>
+          <div class="mode-row" id="mode-row">
+            <button class="btn btn-p btn-sm" data-mode="auto">🤖 Auto</button>
+            <button class="btn btn-ghost btn-sm" data-mode="semi">⚙ Semi-Auto</button>
+            <button class="btn btn-ghost btn-sm" data-mode="manual">✏ Manual</button>
+            <button class="btn btn-ghost btn-sm" data-mode="ZLD">♾ ZLD Mode</button>
+          </div>
+          <div class="input-grid">
+            <div class="field">
+              <label>Industry Type</label>
+              <select id="i-ind">
+                <option>Textile</option><option>Pharmaceutical</option><option>Chemical</option>
+                <option>Food &amp; Beverage</option><option>Dairy</option><option>Distillery</option>
+                <option>Sugar</option><option>Hospital</option><option>Residential/Municipal</option>
+                <option>Pulp &amp; Paper</option><option>Metal Finishing</option><option>Tannery</option>
+                <option>Power Plant</option><option>Electronics</option><option>Auto/Vehicle Wash</option>
+              </select>
+            </div>
+            <div class="field"><label>Flow Rate (m³/day)</label><input id="i-flow" value="1000"/></div>
+            <div class="field"><label>COD Inlet (mg/L)</label><input id="i-cod" value="2500"/></div>
+            <div class="field"><label>BOD Inlet (mg/L)</label><input id="i-bod" value="1200"/></div>
+            <div class="field"><label>TSS (mg/L)</label><input id="i-tss" value="800"/></div>
+            <div class="field"><label>TDS (mg/L)</label><input id="i-tds" value="3500"/></div>
+            <div class="field"><label>pH Range</label><input id="i-ph" value="7-8.5"/></div>
+            <div class="field"><label>Temperature (°C)</label><input id="i-temp" value="35"/></div>
+            <div class="field"><label>Ammonia-N (mg/L)</label><input id="i-nh3" value="45"/></div>
+            <div class="field"><label>Phosphorus (mg/L)</label><input id="i-pho" value="8"/></div>
+            <div class="field"><label>Oil &amp; Grease (mg/L)</label><input id="i-oil" value="150"/></div>
+            <div class="field"><label>Color (Pt-Co)</label><input id="i-col" value="500"/></div>
+            <div class="field"><label>Conductivity (µS/cm)</label><input id="i-cond" value="4500"/></div>
+            <div class="field full" style="grid-column:1/-1">
+              <label>Special Requirements / Outlet Standards</label>
+              <input id="i-req" value="ZLD with condensate reuse, color removal to &lt;10 Pt-Co" style="width:100%"/>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-p" id="btn-design">⚗ Run AI Design Engine</button>
+            <button class="btn btn-g btn-sm" id="btn-demo-t">📋 Load Textile Demo</button>
+            <button class="btn btn-am btn-sm" id="btn-demo-p">📋 Load Pharma Demo</button>
+          </div>
+        </div>
+
+        <!-- PFD -->
+        <div class="card">
+          <div class="card-title"><span class="ct-dot"></span>Process Flow Diagram</div>
+          <div class="pfd" id="pfd-wrap"></div>
+        </div>
+
+        <!-- AI OUTPUT -->
+        <div class="card" id="design-out-card" style="display:none">
+          <div class="card-title" style="justify-content:space-between">
+            <span style="display:flex;align-items:center;gap:8px"><span class="ct-dot"></span>AI Design Output</span>
+            <span class="tb-badge badge-ai">AQUA-AI v2.0</span>
+          </div>
+          <div id="design-loading" class="loading-row" style="display:none"><div class="spinner"></div>Generating engineering design…</div>
+          <div class="ai-out" id="design-out"></div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: SIMULATE ══ -->
+      <div class="page" id="page-simulate">
+        <div class="row">
+          <div class="card">
+            <div class="card-title"><span class="ct-dot"></span>Simulation Control</div>
+            <p style="font-size:12px;color:var(--txD);margin-bottom:14px;line-height:1.6">AI simulates plant performance, energy usage, sludge generation &amp; chemical consumption based on your design inputs.</p>
+            <button class="btn btn-p" id="btn-sim">▶ Run Full Simulation</button>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="ct-dot"></span>Performance Scores</div>
+            <div class="score-rings" id="score-rings"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="ct-dot"></span>Predicted Removal Efficiencies</div>
+          <div class="bar-wrap" id="removal-bars"></div>
+        </div>
+        <div class="card" id="sim-out-card" style="display:none">
+          <div class="card-title"><span class="ct-dot"></span>Simulation Results</div>
+          <div id="sim-loading" class="loading-row" style="display:none"><div class="spinner"></div>Running simulation model…</div>
+          <div class="ai-out" id="sim-out"></div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: COMPARE ══ -->
+      <div class="page" id="page-compare">
+        <div class="card">
+          <div class="card-title"><span class="ct-dot"></span>Multi-Option Design Comparison</div>
+          <div class="opt-grid" id="opt-grid"></div>
+          <button class="btn btn-p" id="btn-compare">⚖ Generate All Options &amp; Compare</button>
+        </div>
+        <div class="card" id="cmp-out-card" style="display:none">
+          <div class="card-title"><span class="ct-dot"></span>Comparison Analysis</div>
+          <div id="cmp-loading" class="loading-row" style="display:none"><div class="spinner"></div>Generating design alternatives…</div>
+          <div class="ai-out" id="cmp-out"></div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: FINANCIAL ══ -->
+      <div class="page" id="page-financial">
+        <div class="metrics-grid" id="fin-metrics"></div>
+        <div class="card">
+          <div class="card-title"><span class="ct-dot"></span>Financial Parameters</div>
+          <div class="input-grid">
+            <div class="field"><label>CAPEX (₹ Lakhs)</label><input id="f-capex" value="85"/></div>
+            <div class="field"><label>OPEX (₹/m³)</label><input id="f-opex" value="42"/></div>
+            <div class="field"><label>Plant Life (years)</label><input id="f-life" value="20"/></div>
+            <div class="field"><label>Discount Rate (%)</label><input id="f-disc" value="12"/></div>
+            <div class="field"><label>Water Tariff (₹/m³)</label><input id="f-water" value="80"/></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-p" id="btn-fin">💹 Run Financial Analysis</button>
+          </div>
+        </div>
+        <div class="card" id="fin-out-card" style="display:none">
+          <div class="card-title"><span class="ct-dot"></span>Financial Analysis Report</div>
+          <div id="fin-loading" class="loading-row" style="display:none"><div class="spinner"></div>Computing financial model…</div>
+          <div class="ai-out" id="fin-out"></div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: ASSISTANT ══ -->
+      <div class="page" id="page-assistant">
+        <div class="card">
+          <div class="card-title" style="justify-content:space-between">
+            <span style="display:flex;align-items:center;gap:8px"><span class="ct-dot"></span>AQUA-AI Engineering Assistant</span>
+            <span class="tb-badge badge-live">● LIVE</span>
+          </div>
+          <div class="quick-btns" id="quick-btns"></div>
+          <div class="chat-history" id="chat-history"></div>
+          <div class="chat-in-row">
+            <input class="chat-input" id="chat-input" placeholder="Ask about design, troubleshooting, standards, equipment…"/>
+            <button class="btn btn-p" id="btn-chat" style="padding:9px 14px">➤</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: VALIDATION ══ -->
+      <div class="page" id="page-validation">
+        <div class="row">
+          <div class="card">
+            <div class="card-title"><span class="ct-dot"></span>Validation Checklist</div>
+            <div class="check-list" id="check-list"></div>
+          </div>
+          <div class="card col-wide">
+            <div class="card-title"><span class="ct-dot"></span>AI Validation Engine</div>
+            <p style="font-size:12px;color:var(--txD);margin-bottom:14px;line-height:1.6">Full engineering validation with hydraulics, loading checks, safety factors, and compliance verification.</p>
+            <button class="btn btn-p" id="btn-val">✅ Run Full Validation</button>
+            <div id="val-loading" class="loading-row" style="display:none;margin-top:10px"><div class="spinner"></div>Running validation checks…</div>
+            <div class="ai-out" id="val-out" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: DRAWINGS ══ -->
+      <div class="page" id="page-drawings">
+        <div class="row">
+          <div class="card">
+            <div class="card-title"><span class="ct-dot"></span>Drawing Package</div>
+            <div class="dwg-list" id="dwg-list"></div>
+            <div class="btn-row" style="margin-top:12px">
+              <button class="btn btn-ghost btn-sm">📥 Export DWG</button>
+              <button class="btn btn-ghost btn-sm">📄 Export PDF</button>
+              <button class="btn btn-ghost btn-sm">📊 Export Excel</button>
+            </div>
+          </div>
+          <div class="card col-wide">
+            <div class="card-title"><span class="ct-dot"></span>AI Drawing Generation</div>
+            <button class="btn btn-p" id="btn-draw">📐 Generate P&amp;ID &amp; Equipment Lists</button>
+            <div id="draw-loading" class="loading-row" style="display:none;margin-top:10px"><div class="spinner"></div>Generating engineering documents…</div>
+            <div class="ai-out" id="draw-out" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PAGE: REPORTS ══ -->
+      <div class="page" id="page-reports">
+        <div class="card">
+          <div class="card-title"><span class="ct-dot"></span>Report Generation</div>
+          <div class="rtype-row" id="rtype-row"></div>
+          <button class="btn btn-p" id="btn-report">📄 Generate Report</button>
+        </div>
+        <div class="card" id="rep-out-card" style="display:none">
+          <div class="card-title" style="justify-content:space-between">
+            <span style="display:flex;align-items:center;gap:8px"><span class="ct-dot"></span><span id="rep-title-lbl">Report</span></span>
+            <button class="btn btn-ghost btn-sm">📥 Export DOCX</button>
+          </div>
+          <div id="rep-loading" class="loading-row" style="display:none"><div class="spinner"></div>Compiling report…</div>
+          <div class="ai-out" id="rep-out"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /platform -->
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
+const $=id=>document.getElementById(id);
+
+function getInputs(){
+  return{
+    industry:$('i-ind').value,
+    flow:$('i-flow').value,
+    cod:$('i-cod').value,
+    bod:$('i-bod').value,
+    tss:$('i-tss').value,
+    tds:$('i-tds').value,
+    ph:$('i-ph').value,
+    temp:$('i-temp').value,
+    ammonia:$('i-nh3').value,
+    phosphorus:$('i-pho').value,
+    oil:$('i-oil').value,
+    color:$('i-col').value,
+    conductivity:$('i-cond').value,
+    requirements:$('i-req').value,
+    designMode:currentMode
+  };
+}
+
+/* Markdown → HTML */
+function md(t){
+  if(!t)return'';
+  return t
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`([^`]+)`/g,'<code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-family:Share Tech Mono,monospace;font-size:11px">$1</code>')
+    .replace(/^#{4} (.+)$/gm,'<h4 style="color:var(--amb);font-family:Rajdhani,sans-serif;margin:8px 0 3px;font-size:12px">$1</h4>')
+    .replace(/^#{3} (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^#{2} (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^#{1} (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid var(--border);margin:8px 0"/>')
+    .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
+    .replace(/^\d+\. (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g,m=>`<ul style="padding-left:18px;margin:6px 0">${m}</ul>`)
+    .replace(/\n\n+/g,'</p><p style="margin-bottom:8px">')
+    .replace(/\n/g,'<br>');
+}
+
+/* Anthropic streaming */
+async function aiStream(prompt, onChunk){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      stream:true,
+      system:`You are AQUA-AI, a world-class industrial wastewater treatment design AI embedded in a professional engineering platform used by licensed engineers and consultants. Provide technically precise, comprehensive engineering analysis. Use engineering terminology. Format responses with ### headers, bullet points, and tables where helpful. Include specific sizing numbers, loading rates, and parameters. Be authoritative and detailed.`,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if(!res.ok)throw new Error(`API error: ${res.status}`);
+  const reader=res.body.getReader();
+  const dec=new TextDecoder();
+  let full='';
+  while(true){
+    const{done,value}=await reader.read();
+    if(done)break;
+    for(const line of dec.decode(value).split('\n')){
+      if(line.startsWith('data: ')){
+        try{
+          const d=JSON.parse(line.slice(6));
+          if(d.type==='content_block_delta'&&d.delta?.text){
+            full+=d.delta.text;
+            onChunk(full);
+          }
+        }catch{}
+      }
+    }
+  }
+  return full;
+}
+
+function renderStream(outEl, loadEl, text, streaming){
+  if(loadEl) loadEl.style.display='none';
+  outEl.innerHTML=md(text)+(streaming?'<span class="cursor"></span>':'');
+  outEl.scrollTop=outEl.scrollHeight;
+}
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+const PAGE_LABELS={
+  design:'AI Design Engine',simulate:'Simulation',compare:'Option Comparison',
+  financial:'Financial Analysis',assistant:'AI Assistant',
+  validation:'Validation',drawings:'Process Flow',reports:'Reports'
+};
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    el.classList.add('active');
+    const pg=el.dataset.page;
+    $('page-'+pg).classList.add('active');
+    $('pg-title').textContent=PAGE_LABELS[pg]||pg;
+  });
+});
+
+/* ═══════════════════════════════════════════════
+   MODE BUTTONS
+═══════════════════════════════════════════════ */
+let currentMode='auto';
+document.querySelectorAll('#mode-row .btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#mode-row .btn').forEach(x=>{
+      x.classList.remove('btn-p');x.classList.add('btn-ghost');
+    });
+    b.classList.add('btn-p');b.classList.remove('btn-ghost');
+    currentMode=b.dataset.mode;
+    $('mode-tag').textContent='MODE: '+currentMode.toUpperCase();
+    renderPFD();
+  });
+});
+
+/* ═══════════════════════════════════════════════
+   PROJECT INFO
+═══════════════════════════════════════════════ */
+function updateProjInfo(){
+  $('tb-proj').textContent=`${$('i-ind').value} · ${$('i-flow').value} m³/d`;
+}
+['i-ind','i-flow'].forEach(id=>$(id).addEventListener('change',updateProjInfo));
+
+/* ═══════════════════════════════════════════════
+   PROCESS FLOW DIAGRAM
+═══════════════════════════════════════════════ */
+function renderPFD(){
+  const i=getInputs();
+  const isZLD=currentMode==='ZLD'||parseInt(i.tds)>6000;
+  const isHighCOD=parseInt(i.cod)>5000;
+  const TC={bio:'var(--grn)',chem:'var(--amb)',mem:'var(--pur)',sludge:'var(--red)',inlet:'var(--acc)',outlet:'var(--acc)'};
+
+  const nodes=[
+    {type:'inlet',name:'Raw Wastewater',val:i.flow+' m³/d'},
+    {type:'chem',name:'Screening & EQ',val:'Equalization'},
+    {type:'chem',name:parseInt(i.oil)>100?'DAF Unit':'Primary Clarifier',val:parseInt(i.oil)>100?'Oil Separation':'Coag/Floc'},
+    {type:'bio',name:isHighCOD?'UASB+MBBR':currentMode==='ZLD'?'MBBR':'ASP/MBBR',val:isHighCOD?'Anaerobic+Aerobic':'Aerobic Bio'},
+    {type:'bio',name:'Secondary Clarifier',val:'SV30 < 150'},
+    {type:'mem',name:isZLD?'RO System':'Tertiary Filter',val:isZLD?'RO + NF':'PSF + ACF'},
+    {type:'sludge',name:'Sludge Treatment',val:'Filter Press'},
+    {type:'outlet',name:isZLD?'ZLD / Reuse':'Treated Effluent',val:'Compliant'}
+  ];
+
+  $('pfd-wrap').innerHTML=nodes.map((n,idx)=>
+    `<span style="display:flex;align-items:center">
+      <div class="pfd-node ${n.type}">
+        <div class="pfd-type" style="color:${TC[n.type]}">${n.type.toUpperCase()}</div>
+        <div class="pfd-name">${n.name}</div>
+        <div class="pfd-val">${n.val}</div>
+      </div>
+      ${idx<nodes.length-1?'<div class="pfd-arrow">→</div>':''}
+    </span>`
+  ).join('');
+}
+renderPFD();
+
+/* ═══════════════════════════════════════════════
+   SCORE RINGS
+═══════════════════════════════════════════════ */
+function makeRing(score,color,label){
+  const r=34,circ=2*Math.PI*r,fill=(score/100)*circ;
+  return`<div class="score-ring">
+    <svg width="80" height="80" viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="6"/>
+      <circle cx="40" cy="40" r="${r}" fill="none" stroke="${color}" stroke-width="6"
+        stroke-dasharray="${fill} ${circ}" stroke-linecap="round"
+        style="filter:drop-shadow(0 0 4px ${color})"/>
+    </svg>
+    <div class="score-text">
+      <div class="score-num" style="color:${color}">${score}</div>
+      <div class="score-lbl">${label}</div>
+    </div>
+  </div>`;
+}
+function renderRings(sc){
+  $('score-rings').innerHTML=
+    makeRing(sc[0],'var(--grn)','Perf')+
+    makeRing(sc[1],'var(--acc)','Energy')+
+    makeRing(sc[2],'var(--amb)','Cost')+
+    makeRing(sc[3],'var(--pur)','Comply');
+}
+renderRings([86,74,81,92]);
+
+/* ═══════════════════════════════════════════════
+   REMOVAL BARS
+═══════════════════════════════════════════════ */
+const BARS=[
+  {label:'COD Removal',val:96,color:'var(--grn)'},
+  {label:'BOD Removal',val:97,color:'var(--grn)'},
+  {label:'TSS Removal',val:94,color:'var(--acc)'},
+  {label:'TDS Removal',val:72,color:'var(--amb)'},
+  {label:'Color Removal',val:88,color:'var(--pur)'},
+  {label:'Ammonia Removal',val:92,color:'var(--grn)'},
+];
+$('removal-bars').innerHTML=BARS.map(b=>`
+  <div class="bar-item">
+    <div class="bar-head">
+      <span class="bar-lbl">${b.label}</span>
+      <span class="bar-pct" style="color:${b.color}">${b.val}%</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill" style="width:${b.val}%;background:linear-gradient(90deg,${b.color}88,${b.color});box-shadow:0 0 6px ${b.color}60"></div>
+    </div>
+  </div>`).join('');
+
+/* ═══════════════════════════════════════════════
+   OPTION CARDS
+═══════════════════════════════════════════════ */
+const OPTIONS=[
+  {name:'Low Cost',icon:'💰',tags:['Budget','CAPEX Optimized'],color:'var(--amb)',tc:'tag-amber'},
+  {name:'Energy Efficient',icon:'⚡',tags:['Green','Low OpEx'],color:'var(--grn)',tc:'tag-green'},
+  {name:'High Performance',icon:'🏆',tags:['Quality','Reliable'],color:'var(--acc)',tc:'tag-blue'},
+  {name:'Compact Design',icon:'📦',tags:['Small Footprint'],color:'var(--pur)',tc:'tag-purple'},
+  {name:'ZLD Design',icon:'♾',tags:['Zero Discharge','Full Reuse'],color:'var(--red)',tc:'tag-red'},
+];
+$('opt-grid').innerHTML=OPTIONS.map(o=>`
+  <div class="opt-card" style="border-color:${o.color}44">
+    <div class="opt-icon">${o.icon}</div>
+    <div class="opt-name" style="color:${o.color}">${o.name}</div>
+    <div class="opt-tags">${o.tags.map(t=>`<span class="tag ${o.tc}" style="font-size:9px">${t}</span>`).join('')}</div>
+  </div>`).join('');
+
+/* ═══════════════════════════════════════════════
+   FINANCIAL METRICS
+═══════════════════════════════════════════════ */
+function renderFinMetrics(){
+  const cap=parseFloat($('f-capex').value||85);
+  const op=parseFloat($('f-opex').value||42);
+  const fl=parseInt($('i-flow').value||1000);
+  const metrics=[
+    {label:'Est. CAPEX',value:`₹${cap}L`,unit:'lakhs',color:'var(--amb)',cls:'m-amb'},
+    {label:'OPEX/Day',value:`₹${(op*fl/30).toFixed(0)}`,unit:'INR/day',color:'var(--red)',cls:'m-red'},
+    {label:'Payback',value:'4.2',unit:'years',color:'var(--grn)',cls:'m-grn'},
+    {label:'IRR',value:'18.4',unit:'%',color:'var(--grn)',cls:'m-grn'},
+    {label:'NPV (20yr)',value:'₹1.8Cr',unit:'net',color:'var(--acc)',cls:'m-acc'},
+    {label:'Cost/m³',value:`₹${op}`,unit:'INR/m³',color:'var(--txD)',cls:''},
+  ];
+  $('fin-metrics').innerHTML=metrics.map(m=>`
+    <div class="metric ${m.cls}">
+      <div class="metric-label">${m.label}</div>
+      <div class="metric-value" style="color:${m.color}">${m.value}<span class="metric-unit">${m.unit}</span></div>
+    </div>`).join('');
+}
+renderFinMetrics();
+['f-capex','f-opex','i-flow'].forEach(id=>$(id)&&$(id).addEventListener('input',renderFinMetrics));
+
+/* ═══════════════════════════════════════════════
+   VALIDATION CHECKLIST
+═══════════════════════════════════════════════ */
+const CHECKS=[
+  {name:'Hydraulic Load Check',status:'pass'},
+  {name:'BOD Volumetric Loading',status:'pass'},
+  {name:'Solids Retention Time',status:'warn'},
+  {name:'Dissolved Oxygen Req.',status:'pass'},
+  {name:'Sludge Age Validation',status:'pass'},
+  {name:'Equipment Safety Factors',status:'warn'},
+  {name:'CPCB Outlet Standards',status:'pass'},
+  {name:'Pipe Velocity Check',status:'fail'},
+];
+const CK={
+  pass:{bc:'rgba(0,255,156,.08)',bo:'rgba(0,255,156,.25)',lbl:'✓ PASS',cls:'ck-pass'},
+  warn:{bc:'rgba(255,184,0,.08)',bo:'rgba(255,184,0,.25)',lbl:'⚠ WARN',cls:'ck-warn'},
+  fail:{bc:'rgba(255,64,96,.08)',bo:'rgba(255,64,96,.25)',lbl:'✗ FAIL',cls:'ck-fail'},
+};
+$('check-list').innerHTML=CHECKS.map(c=>`
+  <div class="check-row" style="background:${CK[c.status].bc};border-color:${CK[c.status].bo}">
+    <span>${c.name}</span>
+    <span class="${CK[c.status].cls}">${CK[c.status].lbl}</span>
+  </div>`).join('');
+
+/* ═══════════════════════════════════════════════
+   DRAWING LIST
+═══════════════════════════════════════════════ */
+const DRAWINGS=[
+  {name:'Process Flow Diagram (PFD)',status:'ready',icon:'📊'},
+  {name:'P&ID Schematic',status:'ready',icon:'⚙'},
+  {name:'General Arrangement (GA)',status:'pending',icon:'📐'},
+  {name:'Hydraulic Profile',status:'pending',icon:'〰'},
+  {name:'Sludge Flow Diagram',status:'pending',icon:'🔄'},
+  {name:'Electrical SLD',status:'pending',icon:'⚡'},
+];
+$('dwg-list').innerHTML=DRAWINGS.map(d=>`
+  <div class="dwg-row">
+    <span style="display:flex;align-items:center;gap:8px">${d.icon} ${d.name}</span>
+    <span class="tag ${d.status==='ready'?'tag-green':'tag-amber'}">${d.status}</span>
+  </div>`).join('');
+
+/* ═══════════════════════════════════════════════
+   REPORT TYPES
+═══════════════════════════════════════════════ */
+const REPORT_TYPES=['DPR','Feasibility','O&M Manual','Tender Spec','Compliance','Executive Summary'];
+let activeReport='DPR';
+function renderReportTypes(){
+  $('rtype-row').innerHTML=REPORT_TYPES.map(t=>`
+    <button class="btn btn-sm ${t===activeReport?'btn-p':'btn-ghost'}" data-rt="${t}">${t}</button>`).join('');
+  document.querySelectorAll('[data-rt]').forEach(b=>{
+    b.addEventListener('click',()=>{activeReport=b.dataset.rt;renderReportTypes()});
+  });
+}
+renderReportTypes();
+
+/* ═══════════════════════════════════════════════
+   QUICK QUESTIONS
+═══════════════════════════════════════════════ */
+const QUICK_QS=[
+  'What HRT is optimal for MBBR with COD 2500 mg/L?',
+  'Compare MBBR vs MBR for textile wastewater',
+  'RO recovery rate for TDS 5000 mg/L?',
+  'Why is my SVI high? Troubleshoot',
+  'ZLD system design checklist',
+  'CPCB discharge standards for textile',
+];
+$('quick-btns').innerHTML=QUICK_QS.map(q=>`
+  <button class="btn btn-ghost btn-sm" style="font-size:10px" data-q="${q.replace(/"/g,'&quot;')}">${q}</button>`).join('');
+document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>sendChat(b.dataset.q)));
+
+/* ═══════════════════════════════════════════════
+   CHAT
+═══════════════════════════════════════════════ */
+// Add initial greeting
+(function(){
+  const box=$('chat-history');
+  const div=document.createElement('div');
+  div.className='chat-msg chat-ai';
+  div.innerHTML=`<div class="chat-ai-lbl">AQUA-AI</div>Hello, I'm AQUA-AI — your wastewater engineering assistant. Ask me anything about ETP/STP/WTP design, troubleshooting, standards, equipment selection, or optimization.`;
+  box.appendChild(div);
+})();
+
+async function sendChat(q){
+  q=q||$('chat-input').value.trim();
+  if(!q)return;
+  $('chat-input').value='';
+
+  // User message
+  const box=$('chat-history');
+  const uDiv=document.createElement('div');
+  uDiv.className='chat-msg chat-user';
+  uDiv.textContent=q;
+  box.appendChild(uDiv);
+  box.scrollTop=box.scrollHeight;
+
+  // AI placeholder
+  const aiDiv=document.createElement('div');
+  aiDiv.className='chat-msg chat-ai';
+  aiDiv.innerHTML=`<div class="chat-ai-lbl">AQUA-AI</div><span class="cursor"></span>`;
+  box.appendChild(aiDiv);
+  box.scrollTop=box.scrollHeight;
+
+  $('btn-chat').disabled=true;
+  const i=getInputs();
+  const ctx=i.flow?`Current project context: ${i.industry} plant, Flow: ${i.flow} m³/d, COD: ${i.cod} mg/L, BOD: ${i.bod} mg/L. `:'';
+
+  try{
+    await aiStream(ctx+q,txt=>{
+      aiDiv.innerHTML=`<div class="chat-ai-lbl">AQUA-AI</div>${md(txt)}<span class="cursor"></span>`;
+      box.scrollTop=box.scrollHeight;
+    });
+    // Remove cursor when done - get last text
+    const cur=aiDiv.querySelector('.cursor');
+    if(cur)cur.remove();
+  }catch(e){
+    aiDiv.innerHTML=`<div class="chat-ai-lbl">AQUA-AI</div><span style="color:var(--red)">Error: ${e.message}. Please check your API connection.</span>`;
+  }
+  $('btn-chat').disabled=false;
+}
+$('btn-chat').addEventListener('click',()=>sendChat());
+$('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey)sendChat()});
+
+/* ═══════════════════════════════════════════════
+   DEMO LOADERS
+═══════════════════════════════════════════════ */
+$('btn-demo-t').addEventListener('click',()=>{
+  $('i-ind').value='Textile';
+  $('i-flow').value='2000';$('i-cod').value='3000';$('i-bod').value='1500';
+  $('i-tss').value='900';$('i-tds').value='5000';$('i-ph').value='10-11';
+  $('i-temp').value='45';$('i-nh3').value='20';$('i-pho').value='5';
+  $('i-oil').value='80';$('i-col').value='2000';$('i-cond').value='6000';
+  $('i-req').value='ZLD with condensate reuse, color removal to <10 Pt-Co';
+  updateProjInfo();renderPFD();renderFinMetrics();
+});
+$('btn-demo-p').addEventListener('click',()=>{
+  $('i-ind').value='Pharmaceutical';
+  $('i-flow').value='500';$('i-cod').value='8000';$('i-bod').value='4000';
+  $('i-tss').value='500';$('i-tds').value='2000';$('i-ph').value='6-9';
+  $('i-temp').value='30';$('i-nh3').value='120';$('i-pho').value='15';
+  $('i-oil').value='50';$('i-col').value='200';$('i-cond').value='3000';
+  $('i-req').value='High COD removal, CPCB pharma norms, possible MBR';
+  updateProjInfo();renderPFD();renderFinMetrics();
+});
+
+/* ═══════════════════════════════════════════════
+   AI: DESIGN ENGINE
+═══════════════════════════════════════════════ */
+$('btn-design').addEventListener('click',async()=>{
+  const i=getInputs();
+  const prompt=`Design a complete wastewater treatment system with these parameters:
+
+Industry: ${i.industry}
+Flow Rate: ${i.flow} m³/day
+Inlet COD: ${i.cod} mg/L
+Inlet BOD: ${i.bod} mg/L
+Inlet TSS: ${i.tss} mg/L
+Inlet TDS: ${i.tds} mg/L
+pH Range: ${i.ph}
+Temperature: ${i.temp}°C
+Ammonia-N: ${i.ammonia} mg/L
+Phosphorus: ${i.phosphorus} mg/L
+Oil & Grease: ${i.oil} mg/L
+Color: ${i.color} Pt-Co
+Conductivity: ${i.conductivity} µS/cm
+Design Mode: ${i.designMode}
+Special Requirements: ${i.requirements}
+
+Provide:
+### 1. Effluent Characterization & Treatment Challenges
+### 2. Recommended Treatment Train (technology selection rationale)
+### 3. Unit Process Design Parameters
+Include HRT, SRT, loading rates, tank volumes, equipment sizing for each unit
+### 4. Mass Balance (inlet → outlet for COD, BOD, TSS, TDS)
+### 5. Sludge Generation & Handling
+### 6. Chemical Dosing Requirements
+### 7. Energy Estimation (kWh/m³)
+### 8. Outlet Quality Prediction
+### 9. Key Design Assumptions & Safety Factors
+### 10. Compliance Notes (CPCB/EPA standards)
+
+Be specific with numbers, sizing, and engineering parameters.`;
+
+  $('design-out-card').style.display='block';
+  $('design-loading').style.display='flex';
+  $('design-out').innerHTML='';
+  $('btn-design').disabled=true;
+
+  try{
+    await aiStream(prompt,txt=>{
+      $('design-loading').style.display='none';
+      $('design-out').innerHTML=md(txt)+'<span class="cursor"></span>';
+      $('design-out').scrollTop=$('design-out').scrollHeight;
+    });
+    const cur=$('design-out').querySelector('.cursor');
+    if(cur)cur.remove();
+  }catch(e){
+    $('design-out').innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  $('btn-design').disabled=false;
+  renderPFD();
+});
+
+/* ═══════════════════════════════════════════════
+   AI: SIMULATION
+═══════════════════════════════════════════════ */
+$('btn-sim').addEventListener('click',async()=>{
+  const i=getInputs();
+  const prompt=`Run a detailed wastewater treatment simulation for:
+Industry: ${i.industry}, Flow: ${i.flow} m³/day, COD: ${i.cod} mg/L, BOD: ${i.bod} mg/L, TDS: ${i.tds} mg/L
+
+Provide simulation results:
+### COD/BOD Reduction Prediction (stage by stage)
+Show table with: Stage | Inlet COD | Outlet COD | % Removal | HRT
+### Sludge Generation Forecast
+### Energy Consumption Model (kWh/day breakdown by unit)
+### Chemical Consumption (kg/day per chemical)
+### Plant Performance Scoring (0-100)
+- Biological Performance Score
+- Energy Efficiency Score
+- Cost Efficiency Score
+- Regulatory Compliance Score
+### Sensitivity Analysis (what if flow increases 20%?)
+### Bottleneck Identification
+### Optimization Recommendations`;
+
+  $('sim-out-card').style.display='block';
+  $('sim-loading').style.display='flex';
+  $('sim-out').innerHTML='';
+  $('btn-sim').disabled=true;
+
+  try{
+    await aiStream(prompt,txt=>{
+      $('sim-loading').style.display='none';
+      $('sim-out').innerHTML=md(txt)+'<span class="cursor"></span>';
+      $('sim-out').scrollTop=$('sim-out').scrollHeight;
+    });
+    const cur=$('sim-out').querySelector('.cursor');
+    if(cur)cur.remove();
+  }catch(e){
+    $('sim-out').innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  $('btn-sim').disabled=false;
+  renderRings([84+Math.floor(Math.random()*10),70+Math.floor(Math.random()*15),78+Math.floor(Math.random()*12),88+Math.floor(Math.random()*10)]);
+});
+
+/* ═══════════════════════════════════════════════
+   AI: COMPARISON
+═══════════════════════════════════════════════ */
+$('btn-compare').addEventListener('click',async()=>{
+  const i=getInputs();
+  const prompt=`Generate a side-by-side comparison of 5 design alternatives for:
+Industry: ${i.industry}, Flow: ${i.flow} m³/day, COD: ${i.cod} mg/L
+
+For each design option (Low Cost, Energy Efficient, High Performance, Compact, ZLD), provide:
+
+### Design Comparison Table
+Create a detailed table comparing all 5 options across:
+- Primary Treatment Technology
+- Biological Technology
+- Tertiary Treatment
+- CAPEX (INR Lakhs)
+- OPEX (INR/m³)
+- Energy (kWh/m³)
+- Footprint (m²)
+- Outlet COD (mg/L)
+- Outlet TDS (mg/L)
+- Recovery %
+- Sludge (kg/day)
+- Pros
+- Cons
+- Best For
+
+### Recommendation
+Which option is best for this specific case and why?
+
+### Technology Notes
+Brief notes on why each technology was selected per option.`;
+
+  $('cmp-out-card').style.display='block';
+  $('cmp-loading').style.display='flex';
+  $('cmp-out').innerHTML='';
+  $('btn-compare').disabled=true;
+
+  try{
+    await aiStream(prompt,txt=>{
+      $('cmp-loading').style.display='none';
+      $('cmp-out').innerHTML=md(txt)+'<span class="cursor"></span>';
+      $('cmp-out').scrollTop=$('cmp-out').scrollHeight;
+    });
+    const cur=$('cmp-out').querySelector('.cursor');
+    if(cur)cur.remove();
+  }catch(e){
+    $('cmp-out').innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  $('btn-compare').disabled=false;
+});
+
+/* ═══════════════════════════════════════════════
+   AI: FINANCIAL
+═══════════════════════════════════════════════ */
+$('btn-fin').addEventListener('click',async()=>{
+  const i=getInputs();
+  const cap=$('f-capex').value,op=$('f-opex').value,life=$('f-life').value,disc=$('f-disc').value,water=$('f-water').value;
+  const prompt=`Perform complete financial analysis for wastewater treatment plant:
+
+Industry: ${i.industry}, Flow: ${i.flow} m³/day
+Estimated CAPEX: ₹${cap} Lakhs
+OPEX Estimate: ₹${op}/m³
+Plant Lifespan: ${life} years
+Discount Rate: ${disc}%
+Water Cost Savings: ₹${water}/m³
+
+Provide:
+### CAPEX Breakdown
+Detailed item-wise capital cost (civil, mechanical, electrical, instrumentation, piping, installation)
+### OPEX Breakdown
+Monthly operating costs (power, chemicals, manpower, maintenance, consumables)
+### ROI Analysis
+- Simple Payback Period
+- Discounted Payback Period
+- Net Present Value (NPV)
+- Internal Rate of Return (IRR)
+- Profitability Index
+### Life Cycle Cost Analysis (Year 1-20 table)
+### Sensitivity Analysis
+Impact of ±20% variation in CAPEX, OPEX, water tariff
+### Revenue Streams
+- Water recycling value
+- Sludge disposal savings
+- Regulatory compliance value
+- Carbon credit potential
+### Funding & Finance Options
+Recommendations for financing the plant`;
+
+  $('fin-out-card').style.display='block';
+  $('fin-loading').style.display='flex';
+  $('fin-out').innerHTML='';
+  $('btn-fin').disabled=true;
+
+  try{
+    await aiStream(prompt,txt=>{
+      $('fin-loading').style.display='none';
+      $('fin-out').innerHTML=md(txt)+'<span class="cursor"></span>';
+      $('fin-out').scrollTop=$('fin-out').scrollHeight;
+    });
+    const cur=$('fin-out').querySelector('.cursor');
+    if(cur)cur.remove();
+  }catch(e){
+    $('fin-out').innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  $('btn-fin').disabled=false;
+});
+
+/* ═══════════════════════════════════════════════
+   AI: VALIDATION
+═══════════════════════════════════════════════ */
+$('btn-val').addEventListener('click',async()=>{
+  const i=getInputs();
+  const prompt=`Perform complete engineering validation of wastewater treatment design:
+
+Industry: ${i.industry}, Flow: ${i.flow} m³/day, COD: ${i.cod} mg/L, BOD: ${i.bod} mg/L, TSS: ${i.tss} mg/L
+
+Validate all aspects:
+### Hydraulic Validation
+- Peak flow factor check (use 2.0-2.5 as standard)
+- Pipe velocity check (0.6-3 m/s)
+- Head loss calculations
+- Free board adequacy
+
+### Biological Loading Validation
+- BOD volumetric loading (check against standard ranges)
+- F:M ratio check
+- SRT adequacy
+- MLSS/MLVSS ratios
+
+### Equipment Sizing Verification
+- Blower sizing (DO requirement)
+- Pump duty/standby check
+- Clarifier surface loading rate
+- Sludge handling capacity
+
+### Safety Factor Review
+- Are all safety factors adequate? (minimum 1.25)
+- Peak load handling capacity
+
+### Compliance Check
+- CPCB General Standards
+- Industry-specific outlet standards
+- Any potential violations
+
+### Issues Found & Corrections Required
+List each issue with severity (Critical/Major/Minor) and recommended fix.`;
+
+  $('val-loading').style.display='flex';
+  $('val-out').style.display='block';
+  $('val-out').innerHTML='';
+  $('btn-val').disabled=true;
+
+  try{
+    await aiStream(prompt,txt=>{
+      $('val-loading').style.display='none';
+      $('val-out').innerHTML=md(txt)+'<span class="cursor"></span>';
+      $('val-out').scrollTop=$('val-out').scrollHeight;
+    });
+    const cur=$('val-out').querySelector('.cursor');
+    if(cur)cur.remove();
+  }catch(e){
+    $('val-out').innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  $('btn-val').disabled=false;
+});
+
+/* ═══════════════════════════════════════════════
+   AI: DRAWINGS / P&ID
+═══════════════════════════════════════════════ */
+$('btn-draw').addEventListener('click',async()=>{
+  const i=getInputs();
+  const prompt=`Generate a complete P&ID description and drawing notes for:
+Industry: ${i.industry}, Flow: ${i.flow} m³/day, COD: ${i.cod} mg/L
+
+Provide:
+### P&ID Equipment List
+Complete tagged equipment list with P&ID tag numbers (e.g., T-101, P-101, BL-101)
+Format as table: Tag | Equipment Name | Size/Capacity | Quantity | Material of Construction
+
+### Instrument List (Instrumentation Schedule)
+Format as table: Tag | Instrument | Location | Range | Signal Type
+
+### Valve Schedule
+Key valves (gate, ball, butterfly, check) with sizes and locations
+
+### Control Philosophy
+Key control loops description (DO control, level control, flow control)
+
+### Pipe Schedule
+Main process lines with size, material, flow direction
+
+### Equipment Nozzle Schedule
+Key nozzles for major vessels (EQ tank, aeration tank, clarifier)
+
+### Drawing Notes & Legends
+Standard P&ID notes and symbols used`;
+
+  $('draw-loading').style.display='flex';
+  $('draw-out').style.display='block';
+  $('draw-out').innerHTML='';
+  $('btn-draw').disabled=true;
+
+  try{
+    await aiStream(prompt,txt=>{
+      $('draw-loading').style.display='none';
+      $('draw-out').innerHTML=md(txt)+'<span class="cursor"></span>';
+      $('draw-out').scrollTop=$('draw-out').scrollHeight;
+    });
+    const cur=$('draw-out').querySelector('.cursor');
+    if(cur)cur.remove();
+  }catch(e){
+    $('draw-out').innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  $('btn-draw').disabled=false;
+});
+
+/* ═══════════════════════════════════════════════
+   AI: REPORTS
+═══════════════════════════════════════════════ */
+$('btn-report').addEventListener('click',async()=>{
+  const i=getInputs();
+  $('rep-title-lbl').textContent=activeReport+' Report';
+
+  const prompts={
+    'DPR':`Generate a ${activeReport} report for wastewater treatment plant:
+Industry: ${i.industry}, Flow: ${i.flow} m³/day, COD: ${i.cod} mg/L, BOD: ${i.bod} mg/L
+
+### Detailed Project Report (DPR) Structure:
+1. Executive Summary
+2. Project Background & Objectives
+3. Site Description & Survey
+4. Wastewater Characterization
+5. Treatment Technology Selection
+6. Proposed Design (with key parameters)
+7. Equipment List (major items)
+8. Civil Works Scope
+9. Electrical & Instrumentation
+10. Project Cost Estimate (itemwise)
+11. Operating Cost Analysis
+12. Implementation Schedule (Gantt)
+13. Environmental & Safety Aspects
+14. Regulatory Compliance
+15. Conclusions & Recommendations`,
+
+    'Feasibility':`Generate a technical and financial feasibility report for:
+Industry: ${i.industry}, Flow: ${i.flow} m³/day, COD: ${i.cod} mg/L
+
+Including:
+- Technical feasibility (can it treat to required standards?)
+- Technology options with pros/cons
+- Site suitability assessment
+- Regulatory framework analysis
+- Financial feasibility (CAPEX, ROI, payback)
+- Risks and mitigation strategies
+- Go/No-Go recommendation`,
+
+    'O&M Manual':`Generate an Operations & Maintenance Manual for:
+Industry: ${i.industry}, Flow: ${i.flow} m³/day ETP/STP
+
+Covering:
+### Plant Startup Procedure
+### Normal Operating Procedures (each unit)
+### Daily Monitoring Checklist (parameters, frequencies, acceptable range)
+### Alarm Response Procedures
+### Preventive Maintenance Schedule (monthly/quarterly/annual)
+### Troubleshooting Guide (12 common problems and solutions with root cause)
+### Chemical Handling & Safety
+### Emergency Response Procedures`,
+
+    'Tender Spec':`Generate Technical Specifications for ${i.industry} ETP Tender:
+Flow: ${i.flow} m³/day, COD: ${i.cod} mg/L
+
+### 1. Scope of Work
+### 2. Design Basis & Performance Guarantee
+### 3. Equipment Technical Specifications
+### 4. Civil Construction Specifications
+### 5. Electrical & Instrumentation Scope
+### 6. Material of Construction Requirements
+### 7. Testing & Commissioning
+### 8. Documentation Requirements
+### 9. Warranty & AMC Terms`,
+
+    'Compliance':`Generate a Regulatory Compliance Report for:
+Industry: ${i.industry}, Flow: ${i.flow} m³/day ETP
+
+### 1. Applicable Regulations
+CPCB General Standards | ${i.industry} Sector Standards | State PCB Norms
+### 2. Compliance Status Table
+Parameter | CPCB Limit | Predicted Value | Compliant?
+### 3. Consent to Establish (CTE) Requirements
+### 4. Consent to Operate (CTO) Requirements
+### 5. Online Monitoring Requirements (OCEMS)
+### 6. Environmental Statement Requirements
+### 7. Compliance Action Plan`,
+
+    'Executive Summary':`Generate a one-page Executive Summary for:
+Industry: ${i.industry}, Flow: ${i.flow} m³/day, COD: ${i.cod} mg/L ETP/STP project
+
+### Project Overview
+### Key Design Features
+### Performance Summary Table
+### Financial Summary (CAPEX, OPEX, Payback)
+### Compliance Status
+### Risk Highlights
+### Recommendation & Next Steps`
+  };
+
+  const prompt=prompts[activeReport]||prompts['DPR'];
+
+  $('rep-out-card').style.display='block';
+  $('rep-loading').style.display='flex';
+  $('rep-out').innerHTML='';
+  $('btn-report').disabled=true;
+
+  try{
+    await aiStream(prompt,txt=>{
+      $('rep-loading').style.display='none';
+      $('rep-out').innerHTML=md(txt)+'<span class="cursor"></span>';
+      $('rep-out').scrollTop=$('rep-out').scrollHeight;
+    });
+    const cur=$('rep-out').querySelector('.cursor');
+    if(cur)cur.remove();
+  }catch(e){
+    $('rep-out').innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  $('btn-report').disabled=false;
+});
+
+/* Init */
+updateProjInfo();
+</script>
+</body>
+</html>
